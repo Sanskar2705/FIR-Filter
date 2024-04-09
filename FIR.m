@@ -1,105 +1,51 @@
-clc
-clear all
+clc;
+close all;
+iir_order= 4;
+fir_order= 12;
+Fs = 40e3;
+Fc = 12.8e3;
+Fn = Fc/(Fs/2);
+Ap = 0.05; Ap_dB = -20*log(1-Ap);
+As = 0.1; As_dB = -20*log(As);
+[B,A] = ellip(iir_order,Ap_dB,As_dB,Fn,"low");
+imp_signal=[1 zeros(1,5000)];
 
-fc = 8.4e3; % Cutoff Frequency
-fs = 25e3; % Sampling Frequency
-Rp = 0.5; % Passband Ripple in dB
-Rs = 60; % Stopband Attenuation in dB
+iir_=filter(B,A,imp_signal);
+fir_=iir_(1:fir_order);
+fir_fi = fi(fir_,1,8,6);
 
-% Elliptic filter
-[b, a] = ellip(4, Rp, Rs, fc/(fs/2), 'low');
-
-impulse_signal = [1, zeros(1, 99)];
-
-% Filter impulse signal using IIR filter
-IIR_ImpulseResponse = filter(b, a, impulse_signal);
-FIR = IIR_ImpulseResponse(1:13);
-
-% Loading audio 
-[audio,Fs] = audioread('song.mp3');
-audio = resample(audio,fs,Fs);
-audio = audio(:,1);
-audio = audio(1:250001);
-
-% Perform FFT on original audio
-fft_result = fft(audio);
-len = length(audio);
-frequencies = linspace(0, fs, len);
-magnitude_dB = 20*log10(abs(fft_result));
-
-% Plot original audio spectrum
-figure;
-subplot(3,1,1)
-plot(frequencies, magnitude_dB);
-title('Original Audio Spectrum');
-xlabel('Frequency (Hz)');
-ylabel('Magnitude (dB)');
-grid on;
-xlim([0, fs/2]);
-
-% Filter audio using designed FIR filter
-audio_filtered = filter(FIR,1,audio);
-
-% Perform FFT on filtered audio
-fft_result_1 = fft(audio_filtered);
-len = length(audio_filtered);
-frequencies = linspace(0, fs, len);
-magnitude_dB = 20*log10(abs(fft_result_1));
-
-% subplot(3,1,2)
-% plot(frequencies, magnitude_dB);
-% title('Filtered Audio Spectrum');
-% xlabel('Frequency (Hz)');
-% ylabel('Magnitude');
-% grid on;
-% xlim([0, fs/2]);
-
-% Convert FIR coefficients to fixed-point for usage in Simulink
-fir_fi = fi(FIR,1,8,6);
-ts = 1/fs;
-time = ts * (0:length(audio) - 1);
-for i = 1:13
-    simin{i} = timeseries(fir_fi(i),time);
-end
-
-% Load Simulink output
-load('SimulinkOut.mat')
-audio_filtered_sim = get(out,"simout");
-audio_filtered_sim1 = audio_filtered_sim.Data(:,1);
-audio_filtered_sim1 = audio_filtered_sim1.data;
-
-% Perform FFT on Simulink filtered audio
-fft_result_2 = fft(audio_filtered_sim1);
-len = length(audio_filtered_sim1);
-frequencies = linspace(0, fs, len);
-magnitude_dB = 20*log10(abs(fft_result_2));
-
-% Plot filtered Simulink audio spectrum
-% subplot(3,1,3)
-% plot(frequencies, magnitude_dB);
-% title('Filtered Simulink Audio Spectrum');  
-% xlabel('Frequency (Hz)');
-% ylabel('Magnitude');
-% grid on;
-% xlim([0, fs/2]);
-
-% Calculate Mean Squared Error (MSE) between designed and Simulink filtered audio
-mse = 0.5.*(abs(Y1 - Y2).^2);
-data = mse;
-
-% Define window size for moving average
-windowSize = 700;
-
-% Calculate moving average of MSE
-movingAvg = conv(data, ones(1, windowSize) / windowSize, 'valid');
-
-% Plot MSE and its moving average
-figure;
-plot(frequencies, data, 'DisplayName', 'Instantaneous MSE');
+%audio input
+audio_data=audioread("C:\Users\91798\Documents\MATLAB\sample2.mp3");
+audio_data=audio_data(:,1);
+filter_out = filter(fir_fi,1,fi(audio_data,1,8,6));
+fvtool(double(filter_out));
 hold on;
-plot(frequencies(windowSize:end), movingAvg, 'r', 'DisplayName', ['Moving Average (', num2str(windowSize), ' samples)']);
-hold off;
-title('Mean Squared Error (MSE) between designed and Simulink FIR Filter');
-xlabel('Frequency (Hz)');
-ylabel('MSE');
-xlim([0, fs/2]);
+
+fs =40e3;
+ts = 1/fs;
+samples = 5000;
+% Create time vector
+time = ts*(0:(samples-1));
+time = time';
+impulse = [1 zeros(1,samples-1)];
+audio_data=audio_data(1:5000);
+simin18 = timeseries(fi(audio_data,1,8,6),time);
+
+simin0 = timeseries(fir_fi(1),time);
+simin1 = timeseries(fir_fi(2),time);
+simin2 = timeseries(fir_fi(3),time);
+simin3 = timeseries(fir_fi(4),time);
+simin4 = timeseries(fir_fi(5),time);
+ simin5 = timeseries(fir_fi(6),time);
+ simin6 = timeseries(fir_fi(7),time);
+ simin7 = timeseries(fir_fi(8),time);
+ simin8 = timeseries(fir_fi(9),time);
+ simin9 = timeseries(fir_fi(10),time);
+ simin10 = timeseries(fir_fi(11),time);
+ simin11 = timeseries(fir_fi(12),time);
+% simin12 = timeseries(fir_fi(13),time);
+% simin13 = timeseries(fir_fi(14),time);
+% simin14 = timeseries(fir_fi(15),time);
+% simin15 = timeseries(fir_fi(16),time);
+% simin16 = timeseries(fir_fi(17),time);
+% simin17 = timeseries(fir_fi(18),time);
